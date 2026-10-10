@@ -1,2 +1,2 @@
-# local_test_jodhpur_sweets_project
-test purposes
+# stock_mangments
+jodhpur sweets

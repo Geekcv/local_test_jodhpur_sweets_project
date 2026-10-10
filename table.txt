@@ -1,0 +1,505 @@
+
+
+CREATE TABLE sms.shops (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ shop_name text NOT NULL,
+ address TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.counters (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ shop_id TEXT REFERENCES sms.shops(row_id) ON DELETE CASCADE,
+ counter_name TEXT,
+ location TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+
+CREATE TABLE sms.users (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ name TEXT,
+ email TEXT UNIQUE,
+ phone TEXT,
+ password TEXT,
+ role TEXT,
+counter_id TEXT ,
+cr_on timestamp without time zone DEFAULT now() NOT NULL,
+up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.suppliers (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ supplier_name TEXT,
+ phone TEXT,
+ email TEXT,
+ address TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+
+CREATE TABLE sms.departments (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ department_name VARCHAR(120) NOT NULL,
+ description TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.categories (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ department_id TEXT REFERENCES sms.departments(row_id),
+ category_name TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.sweets (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ category_id TEXT REFERENCES sms.categories(row_id),
+ sweet_name TEXT,
+ shelf_life_days TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+
+CREATE TABLE sms.inventory (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ counter_id TEXT REFERENCES sms.counters(row_id),
+ sweet_id TEXT REFERENCES sms.sweets(row_id),
+ quantity TEXT DEFAULT 0,
+ expiry_date DATE,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL,
+ UNIQUE(counter_id,sweet_id)
+);
+
+CREATE TABLE sms.stock_transactions (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ counter_id TEXT REFERENCES sms.counters(row_id),
+ sweet_id TEXT REFERENCES sms.sweets(row_id),
+ transaction_type TEXT,
+ quantity TEXT,
+ reference_id TEXT,
+ notes TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL
+);
+
+//TODO
+CHECK (transaction_type IN ('IN','OUT','RETURN','ADJUSTMENT'));
+
+CREATE TABLE sms.orders (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ counter_id TEXT REFERENCES sms.counters(row_id),
+ supplier_id TEXT REFERENCES sms.suppliers(row_id),
+ order_status TEXT DEFAULT 'PENDING',
+ order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.order_items (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ order_id TEXT REFERENCES sms.orders(row_id) ON DELETE CASCADE,
+ sweet_id TEXT REFERENCES sms.sweets(row_id),
+ quantity TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.chalans (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ order_id TEXT REFERENCES sms.orders(row_id),
+ supplier_id TEXT REFERENCES sms.suppliers(row_id),
+ dispatch_date TIMESTAMP,
+ transport_details TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+ up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.returns (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ order_id TEXT REFERENCES sms.orders(row_id),
+ sweet_id TEXT REFERENCES sms.sweets(row_id),
+ quantity TEXT,
+ reason TEXT,
+cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.expiry_logs (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ counter_id TEXT REFERENCES sms.counters(row_id),
+ sweet_id TEXT REFERENCES sms.sweets(row_id),
+ quantity TEXT,
+ reason TEXT,
+cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.notifications (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ user_id TEXT REFERENCES sms.users(row_id),
+ title VARCHAR(200),
+ message TEXT,
+ is_read BOOLEAN DEFAULT FALSE,
+cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL
+
+);
+
+CREATE TABLE sms.audit_logs (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+ user_id TEXT REFERENCES sms.users(row_id),
+ action VARCHAR(200),
+ entity_type VARCHAR(50),
+ entity_id TEXT,
+ cr_on timestamp without time zone DEFAULT now() NOT NULL,
+    up_on timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE sms.shops
+ADD COLUMN city TEXT,
+ADD COLUMN state TEXT,
+ADD COLUMN pincode TEXT,
+ADD COLUMN phone TEXT,
+ADD COLUMN email TEXT,
+ADD COLUMN is_active BOOLEAN DEFAULT TRUE,
+ADD COLUMN gst_number TEXT,
+ADD COLUMN owner_name TEXT,
+ADD COLUMN logo_url TEXT;
+
+
+
+ALTER TABLE sms.sweets
+--  Add new columns
+ADD COLUMN unit TEXT DEFAULT 'KG',
+ADD COLUMN price NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN description TEXT,
+ADD COLUMN image_url TEXT,
+ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+
+
+
+
+ALTER TABLE sms.sweets
+ADD COLUMN counter_id TEXT REFERENCES sms.counters(row_id);
+
+ALTER TABLE sms.sweets
+ADD COLUMN return_type TEXT DEFAULT 'NONE';
+//TODO
+CHECK (return_type IN ('NONE','RETURNABLE','NON_RETURNABLE'));
+
+
+ALTER TABLE sms.inventory
+ADD COLUMN min_stock INTEGER DEFAULT 0,
+ADD COLUMN max_stock INTEGER DEFAULT 0;
+
+ALTER TABLE sms.users
+ADD COLUMN shop_id TEXT REFERENCES sms.shops(row_id)
+
+
+CREATE TABLE sms.counter_requests (
+  id SERIAL NOT NULL,
+  row_id TEXT NOT NULL PRIMARY KEY,
+  counter_id TEXT REFERENCES sms.counters(row_id),
+  sweet_id TEXT REFERENCES sms.sweets(row_id),
+  quantity NUMERIC,
+  status TEXT DEFAULT 'PENDING', -- PENDING / APPROVED / REJECTED
+  cr_on timestamp without time zone DEFAULT now() NOT NULL,
+  up_on timestamp without time zone DEFAULT now() NOT NULL
+);
+
+ALTER TABLE sms.orders
+ADD COLUMN shop_id TEXT REFERENCES sms.shops(row_id);
+
+ALTER TABLE sms.orders DROP COLUMN counter_id;
+
+
+
+ALTER TABLE sms.departments
+ADD COLUMN shop_id TEXT REFERENCES sms.shops(row_id);
+
+
+ALTER TABLE sms.categories
+ADD COLUMN shop_id TEXT;
+
+
+ALTER TABLE sms.sweets
+ADD COLUMN shop_id TEXT;
+
+
+ALTER TABLE sms.users
+ADD COLUMN supplier_id TEXT 
+
+
+
+ALTER TABLE sms.notifications
+ADD COLUMN type TEXT,
+ADD COLUMN reference_id TEXT,
+ADD COLUMN reference_type TEXT,
+ADD COLUMN priority TEXT DEFAULT 'NORMAL',
+ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;
+
+DROP TABLE IF EXISTS sms.expiry_logs;
+
+CREATE TABLE sms.expiry_logs (
+ id SERIAL NOT NULL,
+ row_id TEXT NOT NULL PRIMARY KEY,
+
+ counter_id TEXT REFERENCES sms.counters(row_id),
+ sweet_id TEXT REFERENCES sms.sweets(row_id),
+ inventory_id TEXT,
+
+ quantity NUMERIC NOT NULL,
+ expiry_date DATE,
+
+ loss_amount NUMERIC(10,2) DEFAULT 0,
+
+ reason TEXT DEFAULT 'EXPIRED',
+
+ cr_on TIMESTAMP DEFAULT now() NOT NULL,
+ up_on TIMESTAMP DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE sms.order_items
+ADD COLUMN item_status TEXT DEFAULT 'PENDING',
+ADD COLUMN supplied_quantity NUMERIC DEFAULT 0,
+ADD COLUMN reject_reason TEXT;
+
+
+
+
+ALTER TABLE sms.chalans
+ADD COLUMN verification_code TEXT,
+ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+
+
+ALTER TABLE sms.order_items
+ADD COLUMN counter_id TEXT REFERENCES sms.counters(row_id);
+
+
+
+/////////////////////////////////////////
+
+ALTER TABLE sms.departments
+DROP COLUMN shop_id;
+
+ALTER TABLE sms.categories
+DROP COLUMN shop_id;
+
+ALTER TABLE sms.sweets
+DROP COLUMN counter_id;
+
+ALTER TABLE sms.sweets
+DROP COLUMN shop_id;
+
+
+ALTER TABLE sms.sweets
+ADD COLUMN supplier_id TEXT REFERENCES sms.suppliers(row_id);
+
+
+
+CREATE TABLE sms.counter_sweets (
+    id SERIAL NOT NULL,
+    row_id TEXT NOT NULL PRIMARY KEY,
+
+    counter_id TEXT NOT NULL
+        REFERENCES sms.counters(row_id)
+        ON DELETE CASCADE,
+
+    sweet_id TEXT NOT NULL
+        REFERENCES sms.sweets(row_id)
+        ON DELETE CASCADE,
+
+    is_active BOOLEAN DEFAULT TRUE,
+
+    cr_on TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
+    up_on TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
+
+    UNIQUE(counter_id, sweet_id)
+);
+
+
+ALTER TABLE sms.counter_sweets
+ADD COLUMN shop_id TEXT NOT NULL;
+
+
+ALTER TABLE sms.order_items
+ADD COLUMN request_id TEXT
+REFERENCES sms.counter_requests(row_id);
+
+
+ALTER TABLE sms.orders
+ADD COLUMN IF NOT EXISTS parent_order_id TEXT
+REFERENCES sms.orders(row_id);
+
+ALTER TABLE sms.orders
+ADD COLUMN IF NOT EXISTS order_type TEXT DEFAULT 'NORMAL';
+
+ALTER TABLE sms.orders
+ADD COLUMN IF NOT EXISTS resolution_status TEXT DEFAULT 'OPEN';
+
+
+ALTER TABLE sms.order_items
+ADD COLUMN IF NOT EXISTS parent_order_item_id TEXT
+REFERENCES sms.order_items(row_id);
+
+ALTER TABLE sms.order_items
+ADD COLUMN IF NOT EXISTS cancelled_quantity NUMERIC DEFAULT 0;
+
+ALTER TABLE sms.order_items
+ADD COLUMN IF NOT EXISTS remaining_action TEXT DEFAULT 'PENDING';
+
+ALTER TABLE sms.order_items
+ADD COLUMN IF NOT EXISTS remaining_action_on TIMESTAMP;
+
+
+
+
+
+ALTER TABLE sms.sweets
+ADD COLUMN hsn_code TEXT,
+ADD COLUMN hindi_sweets_name TEXT;
+
+
+
+
+-- sweets
+ALTER TABLE sms.sweets
+ADD COLUMN IF NOT EXISTS bulk_unit TEXT,
+ADD COLUMN IF NOT EXISTS bulk_conversion NUMERIC(12,3),
+ADD COLUMN IF NOT EXISTS bulk_price NUMERIC(10,2);
+
+
+-- counter request
+ALTER TABLE sms.counter_requests
+ADD COLUMN IF NOT EXISTS request_unit TEXT,
+ADD COLUMN IF NOT EXISTS basic_quantity NUMERIC(12,3);
+
+
+-- order items
+ALTER TABLE sms.order_items
+ADD COLUMN IF NOT EXISTS order_unit TEXT,
+ADD COLUMN IF NOT EXISTS basic_quantity NUMERIC(12,3);
+
+
+ALTER TABLE sms.stock_transactions
+ADD COLUMN IF NOT EXISTS unit TEXT,
+ADD COLUMN IF NOT EXISTS basic_quantity NUMERIC(12,3);
+
+
+
+ALTER TABLE sms.inventory
+ADD COLUMN IF NOT EXISTS unit TEXT,
+ADD COLUMN IF NOT EXISTS basic_quantity NUMERIC(12,3);
+
+
+
+
+BEGIN;
+
+TRUNCATE TABLE
+    sms.audit_logs,
+    sms.notifications,
+    sms.expiry_logs,
+    sms.returns,
+    sms.chalans,
+    sms.order_items,
+    sms.orders,
+    sms.counter_requests,
+    sms.stock_transactions,
+    sms.inventory,
+    sms.counter_sweets,
+    sms.sweets,
+    sms.categories,
+    sms.departments,
+    sms.users,
+    sms.suppliers,
+    sms.counters,
+    sms.shops
+RESTART IDENTITY CASCADE;
+
+COMMIT;
+
+
+INSERT INTO sms.users (
+    row_id,
+    name,
+    email,
+    phone,
+    password,
+    role
+) VALUES (
+    '1790589000776_sJMH',
+    'Mehul vyas',
+    'mvyas@jodhpursweets.com',
+    '9828243452',
+    '123456',
+    'ADMIN'
+);
+
+
+
+INSERT INTO sms.users (
+    row_id,
+    name,
+    email,
+    phone,
+    password,
+    role,
+    counter_id,
+    shop_id,
+    supplier_id
+) VALUES (
+    '1790589000776_sJMH',
+    'Super Admin',
+    'admin@gmail.com',
+    '9999999999',
+    '123456',
+    'ADMIN',
+    NULL,
+    NULL,
+    NULL
+);
+
+
+Mehul vyas
+9828243452
+
+mvyas@jodhpursweets.com

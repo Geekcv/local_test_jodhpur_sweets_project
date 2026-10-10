@@ -1,0 +1,490 @@
+🧠 SYSTEM MODULES (Understand First)
+
+Tumhara system 6 main parts me divide hota hai:
+
+🏪 Shop & Counter
+👤 User Management
+🍬 Product Management
+📦 Inventory
+📑 Purchase (Order → Chalan)
+💰 Sales (future)
+🔥 1. SHOP & COUNTER MODULE
+✅ APIs
+🏪 Shop
+createShop
+updateShop
+deleteShop
+getAllShops
+getShopById
+🧾 Counter
+createCounter
+updateCounter
+deleteCounter
+getCountersByShop
+getCounterDetails
+👤 2. USER MODULE
+✅ APIs
+createUser
+loginUser
+updateUser
+changePassword
+getUsersByCounter
+getProfile
+🍬 3. PRODUCT MODULE
+✅ Department
+createDepartment
+getDepartments
+✅ Category
+createCategory
+getCategoriesByDepartment
+✅ Sweets
+createSweet
+updateSweet
+getAllSweets
+getSweetsByCategory
+searchSweets
+📦 4. INVENTORY MODULE (VERY IMPORTANT)
+✅ Core APIs
+🔥 (Already built by you)
+addStock ✅ (IN / OUT / ADJUST)
+📊 Inventory APIs
+getInventory
+getInventoryByCounter
+getLowStock
+getExpiryAlerts
+getStockHistory
+🔍 Advanced
+getStockBySweet
+getStockSummary (total stock value)
+📑 5. PURCHASE MODULE (ORDER SYSTEM)
+✅ Order APIs
+createOrderWithItems ✅
+getOrdersByCounter
+getOrdersBySupplier ✅
+getOrderDetails
+updateOrderStatus
+cancelOrder
+🚚 Chalan APIs
+createChalan ✅
+getChalansBySupplier
+getChalansByOrder
+trackDispatch
+📥 MOST IMPORTANT (Missing अभी)
+🔥 receiveOrder (MUST BUILD)
+
+👉 ये करेगा:
+
+order_status → COMPLETED
+stock_transactions → IN
+inventory → update
+🔁 6. RETURN MODULE
+
+(तुमने table पहले बनाया था)
+
+✅ APIs
+createReturn
+getReturnsByOrder
+getReturnHistory
+
+👉 + stock OUT करना होगा
+
+💰 7. SALES MODULE (FUTURE - VERY IMPORTANT)
+
+👉 POS system का main part
+
+🧾 Tables (future add)
+sales
+sale_items
+payments
+✅ APIs
+createSale
+getSales
+getSaleDetails
+refundSale
+
+👉 ये करेगा:
+
+stock OUT
+billing
+📊 8. DASHBOARD / REPORTS
+✅ APIs
+getDashboardStats
+total sales
+total stock
+low stock count
+getSalesReport
+getPurchaseReport
+getProfitReport
+🔐 9. AUTH & SECURITY
+✅ APIs
+login
+logout
+refreshToken
+roleBasedAccess
+🎯 COMPLETE FLOW (FINAL SYSTEM)
+1. Shop create
+2. Counter create
+3. User login
+
+4. Department → Category → Sweets
+
+5. Create Order
+6. Supplier sees order
+7. Create Chalan (dispatch)
+8. Receive Order → Stock IN
+
+9. Sale → Stock OUT
+
+10. Return → Stock OUT
+
+11. Dashboard / Reports
+🚨 MOST IMPORTANT APIs (Focus First)
+
+👉 Agar tum sirf ये 5 बना लो:
+
+✅ createOrderWithItems
+✅ createChalan
+🔥 receiveOrder (NEXT)
+✅ addStock
+🔥 createSale
+
+👉 System fully functional हो जाएगा
+
+
+
+
+
+
+
+
+Great question 👍 — PDF kaha-kaha chahiye ye samajhna bahut important hai (real production feature) 🔥
+
+Tumhara system (Inventory + Order + Chalan + POS) me multiple places pe PDF use hota hai 👇
+
+🎯 🔥 WHERE YOU NEED PDF (IMPORTANT)
+✅ 1. 🧾 Invoice / Bill (MOST IMPORTANT)
+
+👉 Jab sale hoti hai (POS billing)
+
+Use case:
+
+Customer ko bill dena
+Print / download
+
+PDF content:
+
+Shop name + logo
+Items (sweet name, qty, price)
+Total amount
+GST
+Date & counter
+
+👉 API:
+
+GET /downloadInvoice/:sale_id
+✅ 2. 🚚 Chalan PDF (Dispatch Slip)
+
+👉 Supplier dispatch ke time
+
+Use case:
+
+Delivery ke saath slip dena
+Proof of dispatch
+
+PDF content:
+
+Order ID
+Supplier name
+Items list
+Quantity
+Transport details
+Dispatch date
+
+👉 API:
+
+GET /downloadChalan/:chalan_id
+✅ 3. 📦 Purchase Order PDF
+
+👉 Jab counter supplier ko order bhejta hai
+
+Use case:
+
+WhatsApp / Email supplier
+Official order document
+
+PDF content:
+
+Order ID
+Counter details
+Supplier details
+Items list
+
+👉 API:
+
+GET /downloadOrder/:order_id
+✅ 4. 📊 Reports PDF (Admin)
+
+👉 Daily / Monthly reports
+
+Use case:
+
+Owner / admin analysis
+
+PDF types:
+
+Sales report
+Stock report
+Low stock report
+
+👉 API:
+
+POST /downloadReport
+✅ 5. 📉 Stock Report PDF
+
+👉 Inventory snapshot
+
+PDF content:
+
+Sweet name
+Available quantity
+Expiry date
+🧠 🔥 WHERE TO IMPLEMENT IN YOUR FLOW
+Module	PDF Needed
+Orders	✅ Order PDF
+Chalan	✅ Chalan PDF
+Receive	❌ Not needed
+Inventory	✅ Report
+Sales (POS)	✅ Invoice (VERY IMPORTANT)
+🚀 🔥 BEST IMPLEMENTATION (Node.js)
+✅ Libraries
+
+👉 Use:
+
+npm install pdfkit
+🧾 Example: Invoice PDF API
+const PDFDocument = require("pdfkit");
+
+async function downloadInvoice(req, res) {
+  try {
+    const doc = new PDFDocument();
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
+
+    doc.pipe(res);
+
+    // 🔹 Title
+    doc.fontSize(18).text("INVOICE", { align: "center" });
+
+    // 🔹 Dummy data (replace with DB)
+    doc.text("Shop: Jodhpur Sweets");
+    doc.text("Date: " + new Date().toLocaleDateString());
+
+    doc.moveDown();
+
+    // 🔹 Items
+    doc.text("Kaju Katli - 2 KG - ₹800");
+    doc.text("Ladoo - 1 KG - ₹300");
+
+    doc.moveDown();
+
+    doc.text("Total: ₹1100");
+
+    doc.end();
+
+  } catch (error) {
+    console.log("PDF error:", error);
+    res.status(500).send("Error generating PDF");
+  }
+}
+🎯 🔥 BEST PRACTICE (IMPORTANT)
+
+👉 Always:
+
+Fetch data from DB
+Format nicely
+Use table structure
+🔥 UI FLOW (Angular)
+
+👉 Button:
+
+Download Invoice
+Download Chalan
+Download Order
+
+👉 API hit → browser download
+
+🚀 PRO LEVEL FEATURES
+
+👉 Add:
+
+Logo (very important)
+GST number
+QR code (UPI payment)
+Print support
+🎯 FINAL RECOMMENDATION
+
+👉 Start with:
+
+✅ Invoice PDF (TOP PRIORITY)
+✅ Chalan PDF
+✅ Order PDF
+🚀 Next Step
+
+Agar chaho to main tumhe:
+
+👉 🔥 Full dynamic Invoice PDF (DB + table format + GST)
+👉 🔥 Chalan PDF professional format
+
+bana ke de deta hoon
+
+Bolo 👍
+👉 Invoice se start kare ya Chalan PDF se?
+
+
+
+ADMIN Dashboard
+Shops
+Users
+All Reports
+All Orders
+
+SHOP_ADMIN
+Counters
+Inventory
+Orders
+Reports
+
+COUNTER_USER
+Stock Entry
+Inventory View
+Request Stock
+
+SUPPLIER
+Orders List
+Dispatch (Chalan)
+Returns
+
+
+
+
+res {
+  status: 0,
+  msg: 'Login Successful',
+  data: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzczNTc2MjQ4MTQxX2N6RUsiLCJyb2xlIjoiQURNSU4iLCJjb3VudGVySWQiOiIwIiwic2hvcElkIjpudWxsLCJzdXBwbGllcklkIjpudWxsLCJpYXQiOjE3Nzk2MTM1NjksImV4cCI6MTc3OTg3Mjc2OX0.uvsZ12rG2KA2ISjOKAdnYKJswIPSteslmUSWVDuceJw',
+    user_id: '1773576248141_czEK',
+    role: 'ADMIN',
+    counter_id: '0',
+    shop_id: null,
+    supplier_id: null
+  }
+}
+
+
+
+res {
+  status: 0,
+  msg: 'Login Successful',
+  data: {
+   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc0ODgyOTc0NDUyX1lPa1ciLCJyb2xlIjoiU0hPUF9BRE1JTiIsImNvdW50ZXJJZCI6bnVsbCwic2hvcElkIjoiMTc3NDg4Mjk3NDQ1MF9mdlJLIiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzg3NDY0NTY0LCJleHAiOjE3ODc3MjM3NjR9.2sydSc7XUQuELUTbnydio-RxWkm0PyxwsLo8fRjeGWY"
+user_id: "1774882974452_YOkW"
+role: "SHOP_ADMIN"
+counter_id: null
+shop_id: "1774882974450_fvRK"
+supplier_id: null
+  }
+}
+
+
+
+
+res {
+  status: 0,
+  msg: 'Login Successful',
+  data: {
+   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc0ODgzMTMxNDc3X3N0aGMiLCJyb2xlIjoiQ09VTlRFUl9VU0VSIiwiY291bnRlcklkIjoiMTc3NDg4MzEzMTQ3NV9CM0pKIiwic2hvcElkIjoiMTc3NDg4Mjk3NDQ1MF9mdlJLIiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzg3NDY0Mzg3LCJleHAiOjE3ODc3MjM1ODd9.y57RQfIcCtNgJXbHWnUkyFHJl-5bDKBzECDfroWKWog"
+user_id: "1774883131477_sthc"
+role: "COUNTER_USER"
+counter_id: "1774883131475_B3JJ"
+shop_id: "1774882974450_fvRK"
+supplier_id: null
+  },
+
+
+  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc1OTc1NDA1NTM4X2NmRzgiLCJyb2xlIjoiQ09VTlRFUl9VU0VSIiwiY291bnRlcklkIjoiMTc3NTk3NTQwNTUyM19CcGlnIiwic2hvcElkIjoiMTc3NDg4Mjk3NDQ1MF9mdlJLIiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzg3NDY0NTA4LCJleHAiOjE3ODc3MjM3MDh9.on2gLZ9lsiI71zC9Sr04GNNyzLh_yAPLmNWkSNk8__0"
+user_id: "1775975405538_cfG8"
+role: "COUNTER_USER"
+counter_id: "1775975405523_Bpig"
+shop_id: "1774882974450_fvRK"
+supplier_id: null
+}
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc1OTc1NDA1NTM4X2NmRzgiLCJyb2xlIjoiQ09VTlRFUl9VU0VSIiwiY291bnRlcklkIjoiMTc3NTk3NTQwNTUyM19CcGlnIiwic2hvcElkIjoiMTc3NDg4Mjk3NDQ1MF9mdlJLIiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzgwODEzNDY3LCJleHAiOjE3ODEwNzI2Njd9.WvJhlNZpWnykrODwhUk1HIno7uaSGhDlD68ofPgcaLE
+res {
+  status: 0,
+  msg: 'Login Successful',
+  data: {
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc0ODg0NjUwNDcxX0JjejAiLCJyb2xlIjoiU1VQUExJRVIiLCJjb3VudGVySWQiOm51bGwsInNob3BJZCI6bnVsbCwic3VwcGxpZXJJZCI6IjE3NzQ4ODQ2NTA0NjlfbGMxaiIsImlhdCI6MTc4NzQ2NDY1NCwiZXhwIjoxNzg3NzIzODU0fQ.VADJJ0YJxDSJEFxKuB7FeaOA1FB0DqtsjY58eLfMCT8"
+user_id: "1774884650471_Bcz0"
+role: "SUPPLIER"
+counter_id: null
+shop_id: null
+supplier_id: "1774884650469_lc1j"
+  }
+}
+
+
+
+
+🎯 1. Golden Rule (Yaad rakh)
+
+👉 Notification = Event based
+
+Event	Notification
+Request create	Shop Admin
+Request approve/reject	Counter
+Order create	Supplier
+Order update	Shop Admin
+Stock low	Counter
+Expiry	Counter
+
+
+
+********************************
+login 
+admin
+9999999999,123456
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzczNTc2MjQ4MTQxX2N6RUsiLCJyb2xlIjoiQURNSU4iLCJjb3VudGVySWQiOiIwIiwic2hvcElkIjpudWxsLCJzdXBwbGllcklkIjpudWxsLCJpYXQiOjE3ODkwOTk0MDAsImV4cCI6MTc4OTM1ODYwMH0.-duiaarJZraf5auguoPj3IcxhG8WW-AXrkeaDV40urI
+
+
+shop 1
+1234567890,1234
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc1OTc4Nzg4MzA5X1Q0SDkiLCJyb2xlIjoiU0hPUF9BRE1JTiIsImNvdW50ZXJJZCI6bnVsbCwic2hvcElkIjoiMTc3NTk3ODc4ODMwNl9kUGk5Iiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzkwNjA4ODk2LCJleHAiOjE3OTA4NjgwOTZ9.g9weSjRStzytfpgxPiXy3ArG1gY980zXWt4IYm_8pRI
+
+counter 1
+5678943210,1234
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc1OTc5MDk3ODY4X3ZKcFkiLCJyb2xlIjoiQ09VTlRFUl9VU0VSIiwiY291bnRlcklkIjoiMTc3NTk3OTA5Nzg2Nl80NURYIiwic2hvcElkIjoiMTc3NTk3ODc4ODMwNl9kUGk5Iiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzkwNjA4MzgxLCJleHAiOjE3OTA4Njc1ODF9.zGkd2AOrspvaqjcQh5E58MpX3ST4sgBow4TOxFkQzcA
+
+shop 2
+9876543210,1234
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc0ODgzMDc2OTI5X2tZSTIiLCJyb2xlIjoiU0hPUF9BRE1JTiIsImNvdW50ZXJJZCI6bnVsbCwic2hvcElkIjoiMTc3NDg4MzA3NjkyOF9kSnhlIiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzg5MDk5NTA4LCJleHAiOjE3ODkzNTg3MDh9.Xj4zJGHVjSOQDVc9VaMt5OPCnZWr8JBV73i-IZd8KA8
+
+counter 2
+4569871230,1234
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc1OTc5MDYwNDU2X3dqQ3kiLCJyb2xlIjoiQ09VTlRFUl9VU0VSIiwiY291bnRlcklkIjoiMTc3NTk3OTA2MDQ1M19YdWo2Iiwic2hvcElkIjoiMTc3NTk3ODc4ODMwNl9kUGk5Iiwic3VwcGxpZXJJZCI6bnVsbCwiaWF0IjoxNzkwNjA4NDM2LCJleHAiOjE3OTA4Njc2MzZ9.VWu66utElKCmoKc6TvS1uhkE3l02fo_o4vU_t33jrSU
+
+
+suppler 1
+8965743210,1234
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc0ODg0NjUwNDcxX0JjejAiLCJyb2xlIjoiU1VQUExJRVIiLCJjb3VudGVySWQiOm51bGwsInNob3BJZCI6bnVsbCwic3VwcGxpZXJJZCI6IjE3NzQ4ODQ2NTA0NjlfbGMxaiIsImlhdCI6MTc4OTA5OTU3NywiZXhwIjoxNzg5MzU4Nzc3fQ.csu4hdLRr6lfkS3ZwBOpWm60W-bIxw0k38z45WQVVqg
+
+suppler 2
+5698743210, 1234
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzc0ODg0NjcyMDc1X0poenkiLCJyb2xlIjoiU1VQUExJRVIiLCJjb3VudGVySWQiOm51bGwsInNob3BJZCI6bnVsbCwic3VwcGxpZXJJZCI6IjE3NzQ4ODQ2NzIwNzRfWVROSiIsImlhdCI6MTc4OTA5OTYwOSwiZXhwIjoxNzg5MzU4ODA5fQ.Ut9r-zC6SX7Saed7nSI326lNFEM5ZU4LIDffVQKv6jc
+
